@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# pylint: disable=c0111,c0103,c0301,c0412
+# pylint: disable=c0111,c0103,c0301,c0412,e0401
 import os
 import subprocess as sp
 import json
@@ -45,7 +45,7 @@ def connect_to_db(db):
 @when('topic.available', 'activemq_dataflow.connected')
 @when_not('activemq_dataflow.topicconnected')
 def connect_topic(topic):
-    unitd.set('topic', topic.connection()['topic'])
+    unitd.set('topic', topic.connection()['name'])
     unitd.set('activemq', topic.connection()['host'])
     set_state('activemq_dataflow.topicconnected')
 
