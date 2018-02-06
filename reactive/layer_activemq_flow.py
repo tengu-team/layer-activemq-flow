@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # pylint: disable=c0111,c0103,c0301,c0412,e0401
 import os
-import subprocess as sp
-import json
 from charms.reactive import when, when_not, set_state
 from charmhelpers.core.templating import render
 from charmhelpers.core import unitdata
@@ -25,12 +23,11 @@ from charmhelpers.core.hookenv import status_set, service_name
 unitd = unitdata.kv()
 FLOW_PATH = '/opt/dataflow'
 
-@when('dataflow.available')
 @when_not('activemq_dataflow.installed')
-def install_activemq_dataflow(dataflow):
+def install_activemq_dataflow():
     set_state('activemq_dataflow.connected')
     unitd.set('nodes', ['node-red-node-mongodb', 'node-red-node-stomp'])
-    status_set('blocked', 'Waiting for a relation with ActiveMQ and MongoDB')
+    status_set('blocked', 'Waiting for a relation with ActiveMQ, MongoDB and NodeRed-deployer')
 
 ################################################################################
 # First Relation with Db then ActiveMQ
@@ -41,6 +38,7 @@ def connect_to_db(db):
     unitd.set('mongo_uri', db.db_data()['uri'].split(':')[0])
     unitd.set('db', db.db_data()['db'])
     set_state('activemq_dataflow.dbconnected')
+    status_set('blocked', 'Waiting for a relation with ActiveMQ and NodeRed-deployer')
 
 @when('topic.available', 'activemq_dataflow.connected')
 @when_not('activemq_dataflow.topicconnected')
@@ -60,6 +58,7 @@ def set_installed():
     context = {'flow': service_name(), 'topic': unitd.get('topic'), 'activemq': unitd.get('activemq'), 'db': unitd.get('db'), 'mongodb': unitd.get('mongo_uri')}
     render('flow.json', '{}/flow.json'.format(FLOW_PATH), context)
     set_state('activemq_dataflow.installed')
+    status_set('blocked', 'Waiting for a relation with NodeRed-deployer')
 
 @when('activemq_dataflow.installed', 'dataflow.available')
 @when_not('activemq_dataflow.deployed')
